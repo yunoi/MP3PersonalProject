@@ -39,6 +39,7 @@ public class Fragment2 extends Fragment implements View.OnClickListener {
     private LinearLayoutManager layoutManager;
     private MainAdapter adapter;
     private String janre;
+    private int position;
     private boolean btnSwitch = false;
 
     @Nullable
@@ -59,6 +60,13 @@ public class Fragment2 extends Fragment implements View.OnClickListener {
         btnDelete.setOnClickListener(this);
         btnOrder.setOnClickListener(this);
         btnSelect.setOnClickListener(this);
+
+        adapter.onMusicClick(new MainAdapter.musicSelectListener() {
+            @Override
+            public void onMusicClick(View v, int position) {
+                position = position;
+            }
+        });
 
         btnSelect.callOnClick();
         return view;
@@ -141,11 +149,11 @@ public class Fragment2 extends Fragment implements View.OnClickListener {
 
             case R.id.btnDelete:
                 db = dbHelper.getReadableDatabase();
-                Log.e("Fragment2", "delete: "+String.valueOf(adapter.getLastCheckedPosition()));
-                db.execSQL("DELETE FROM myMusicTBL WHERE singer = '"+list.get(adapter.getLastCheckedPosition()).getSinger()+"' AND title = '"+list.get(adapter.getLastCheckedPosition()).getTitle()+"';");
+                Log.e("Fragment2", "delete: "+list.get(position));
+                db.execSQL("DELETE FROM myMusicTBL WHERE singer = '"+list.get(position).getSinger()+"' AND title = '"+list.get(position).getTitle()+"';");
                 db.close();
-                list.remove(adapter.getLastCheckedPosition());
-                adapter.notifyItemRemoved(adapter.getLastCheckedPosition());
+                list.remove(position);
+                adapter.notifyItemRemoved(position);
                 toastDisplay("선택된 목록이 삭제되었습니다.");
                 break;
 

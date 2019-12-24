@@ -26,11 +26,21 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.CustomViewHolder> {
     private  int currentPosition;
     private int lastCheckedPosition = -1;
     private RadioButton selectedRadioButton;
+    private musicSelectListener listener;
 
 
     public MainAdapter(int layout, ArrayList<MainData> list) {
         this.layout = layout;
         this.list = list;
+    }
+
+    // 라디오버튼 리스너 인터페이스
+    public interface musicSelectListener {
+        void onMusicClick(View v, int position);
+    }
+
+    public void onMusicClick(musicSelectListener listener) {
+        this.listener = listener;
     }
 
     public int getCurrentPosition() {
@@ -52,12 +62,23 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.CustomViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull CustomViewHolder customViewHolder, final int position) {
         currentPosition = position;
+        customViewHolder.itemView.setTag(customViewHolder);
+        customViewHolder.radioButton.setTag(customViewHolder);
         customViewHolder.tvSinger.setText(list.get(currentPosition).getSinger());
         customViewHolder.tvTitle.setText(list.get(currentPosition).getTitle());
         customViewHolder.tvJanre.setText(list.get(currentPosition).getJanre());
         customViewHolder.ratingBar.setRating(list.get(currentPosition).getRate());
         customViewHolder.radioButton.setChecked(lastCheckedPosition == position);
-        customViewHolder.itemView.setTag(currentPosition);
+
+        customViewHolder.radioButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (listener != null) {
+                    listener.onMusicClick(v, position);
+
+                }
+            }
+        });
 
     }
 

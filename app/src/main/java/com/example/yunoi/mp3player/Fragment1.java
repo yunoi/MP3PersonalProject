@@ -62,7 +62,7 @@ public class Fragment1 extends Fragment {
     public static DBHelper dbHelper;
     public static SQLiteDatabase db;
     private String janre;
-    public static int position;
+    public static int selectedPosition;
     public static String selectedFile;
     public static final String MP3_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Music/";
 
@@ -75,81 +75,109 @@ public class Fragment1 extends Fragment {
 
         dbHelper = new DBHelper(getActivity().getApplicationContext());
 
-//        File[] mp3List = new File(MP3_PATH).listFiles();
-//        for (File file : mp3List) {
-//            String fileName = file.getName();
-//            if (fileName.length() >= 5) {
-//                String extendName = fileName.substring(fileName.length() - 3);
-//                if (extendName.equals("mp3") && !list.contains(fileName)) {
+        list.clear();
+
+        File[] mp3List = new File(MP3_PATH).listFiles();
+        for (File file : mp3List) {
+            String fileName = file.getName();
+            if (fileName.length() >= 5) {
+                String extendName = fileName.substring(fileName.length() - 3);
+                if (extendName.equals("mp3") && !list.contains(fileName)) {
 //                    list.add(new MainData(fileName));
-//                }
-//            }
-//        }   // end of for
+                    list.add(new MainData(fileName));
+                }
+            }
+        }   // end of for
 
 
-        inputMusic();
-        listSetting();
+
         layoutManager = new LinearLayoutManager(getActivity().getApplicationContext());
         recyclerView.setLayoutManager(layoutManager);
         listAdapter = new ListAdapter(R.layout.list_view_holder, list);
         recyclerView.setAdapter(listAdapter);
+//        if (list == null) {
+//            inputMusic();
+//        }
+
+//        listSetting();
+        listAdapter.onMusicListClick(new ListAdapter.musicListSelectListener() {
+            @Override
+            public void onMusicClick(View v, int position) {
+                selectedPosition = position;
+            }
+        });
+
+        recyclerView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for(int i = 0;i<list.size();i++){
+                    if(list.get(i).isIschecked()){
+                        list.get(i).setIschecked(false);
+                        listAdapter.notifyDataSetChanged();
+
+                    }
+                }
+            }
+        });
         listAdapter.notifyDataSetChanged();
 
         return view;
     }
 
-    private void listSetting() {
-        db = dbHelper.getReadableDatabase();
-        Cursor cursor1;
-        cursor1 = db.rawQuery("SELECT title FROM favMusicTBL;", null);
-        while (cursor1.moveToNext()) {
-            list.add(new MainData(cursor1.getString(0)));
-        }
-        cursor1.close();
-        db.close();
-    }
-
-    private void inputMusic() {
-        String[] data = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ALBUM_ID,
-
-        };
-
-//        MediaStore.Audio.Media.DATA // 데이터 경로
-        Cursor cursor = getActivity().getApplicationContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                data, MediaStore.Audio.Media.DATA +" like ? ", new String[]{MP3_PATH+"%"}, null);
-
-        //db열기
-        db = dbHelper.getWritableDatabase();
-
-        while (cursor.moveToNext()) {
-            //음악데이터 가져오기
-            String id = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
-            String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-            String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-            String albumArt = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
-
-            title = title.replace("'", "''");
-            Log.d("Fragment1", "id = " + id);
-            Log.d("Fragment1", "artist = " + artist);
-            Log.d("Fragment1", "title = " + title);
-            Log.d("Fragment1", "albumArt = " + albumArt);
-
-            String query = "INSERT INTO favMusicTBL VALUES("
-                    + "'" + id + "',"
-                    + "'" + artist + "',"
-                    + "'" + title + "',"
-                    + "'" + albumArt +"');";
-            db.execSQL(query);
-
-        } // while
-        cursor.close();
-        db.close();
-
-    }
+//    private void listSetting() {
+//        db = dbHelper.getReadableDatabase();
+//        Cursor cursor1;
+//        cursor1 = db.rawQuery("SELECT title FROM favMusicTBL;", null);
+//        while (cursor1.moveToNext()) {
+//            list.add(new MainData(cursor1.getString(0)));
+//            Log.d("Fragment1", "title = " + cursor1.getString(0));
+//        }
+//        cursor1.close();
+//        db.close();
+//
+//    }
+//
+//    private void inputMusic() {
+//        String[] data = {
+//                MediaStore.Audio.Media._ID,
+//                MediaStore.Audio.Media.ARTIST,
+//                MediaStore.Audio.Media.TITLE,
+//                MediaStore.Audio.Media.ALBUM_ID,
+//
+//        };
+//
+////        MediaStore.Audio.Media.DATA // 데이터 경로
+//        Cursor cursor = getActivity().getApplicationContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+//                data, MediaStore.Audio.Media.DATA + " like ? ", new String[]{MP3_PATH + "%"}, null);
+//
+//        //db열기
+//        db = dbHelper.getWritableDatabase();
+//
+//        while (cursor.moveToNext()) {
+//            //음악데이터 가져오기
+//            String id = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
+//            String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+//            String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+//            String albumArt = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
+//
+//            title = title.replace("'", "''");
+//            Log.d("Fragment1", "id = " + id);
+//            Log.d("Fragment1", "artist = " + artist);
+//            Log.d("Fragment1", "title = " + title);
+//            Log.d("Fragment1", "albumArt = " + albumArt);
+//
+//            String query = "INSERT INTO favMusicTBL VALUES("
+//                    + "'" + id + "',"
+//                    + "'" + artist + "',"
+//                    + "'" + title + "',"
+//                    + "'" + albumArt + "');";
+//            db.execSQL(query);
+//
+//        } // while
+//        cursor.close();
+//        db.close();
+//
+//    }
 
 //    @Override
 //    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -162,7 +190,6 @@ public class Fragment1 extends Fragment {
     private void toastDisplay(String s) {
         Toast.makeText(getActivity().getApplicationContext(), s, Toast.LENGTH_SHORT).show();
     }
-
 
 }
 

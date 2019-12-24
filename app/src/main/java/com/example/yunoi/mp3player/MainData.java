@@ -6,6 +6,15 @@ public class MainData {
     private String janre;
     private int rate;
     private String fileName;
+    private boolean ischecked;
+
+    public boolean isIschecked() {
+        return ischecked;
+    }
+
+    public void setIschecked(boolean ischecked) {
+        this.ischecked = ischecked;
+    }
 
     public MainData(String singer, String title, String janre, int rate) {
         this.singer = singer;

@@ -8,6 +8,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -28,8 +29,10 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 import static com.example.yunoi.mp3player.Fragment1.MP3_PATH;
+import static com.example.yunoi.mp3player.Fragment1.list;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -44,10 +47,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SeekBar seekBar;
     private MediaPlayer mediaPlayer;
     private View favoriteView;
+    private int selectedPosition;
+    private ArrayList<MainData> list = new ArrayList<>();
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("mm:ss");
     private String janre;
+    public static final String MP3_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Music/";
 
 
+    public MainActivity() {
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ivFoward = findViewById(R.id.ivFoward);
         ivFav = findViewById(R.id.ivFav);
         tvPlaying = findViewById(R.id.tvPlaying);
-        tvTime = findViewById(R.id.tvTime);
+//        tvTime = findViewById(R.id.tvTime);
         seekBar = findViewById(R.id.seekBar);
 
         ivPlay.setOnClickListener(this);
@@ -76,6 +84,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ivFav.setOnClickListener(this);
         ivRewind.setOnClickListener(this);
         ivFoward.setOnClickListener(this);
+
+        File[] mp3List = new File(MP3_PATH).listFiles();
+        for (File file : mp3List) {
+            String fileName = file.getName();
+            if (fileName.length() >= 5) {
+                String extendName = fileName.substring(fileName.length() - 3);
+                if (extendName.equals("mp3") && !list.contains(fileName)) {
+//                    list.add(new MainData(fileName));
+                    list.add(new MainData(fileName));
+                }
+            }
+        }   // end of for
+
+        ListAdapter listAdapter = new ListAdapter(R.layout.list_view_holder, list);
+//        for( e : list){
+//            Log.d("Mainactivity", "onMusicClick : " + list);
+//        }
+        listAdapter.onMusicListClick(new ListAdapter.musicListSelectListener() {
+            @Override
+            public void onMusicClick(View v, int position) {
+                selectedPosition = position;
+                Log.d("Mainactivity", "onMusicClick : " + selectedPosition);
+            }
+        });
 
         mediaPlayer = new MediaPlayer();
         seekBar.setProgress(0);
@@ -118,7 +150,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         setOnChangeFragment(0);
-    }
+
+    } // end of onCreate
+
+
     public void playMusic(String path){
 
         try {
@@ -140,7 +175,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (!mediaPlayer.isPlaying()) {
                         mediaPlayer.start();
                         ivPlay.setImageResource(R.drawable.sharp_pause_black_36dp);
-                        tvPlaying.setText("Now Playing ...   " + Fragment1.selectedFile);
+                        tvPlaying.setText("Now Playing ...   " + list.get(selectedPosition).getTitle());
+                        Log.d("Mainactivity", "onMusicClick : " + selectedPosition);
+
                         startUiThread();
                     } else if (mediaPlayer.isPlaying()) {
                         mediaPlayer.pause();
@@ -224,39 +261,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.ivRewind :
                 if(mediaPlayer.isPlaying()){
                     mediaPlayer.stop();
-                    Fragment1.position-=1;
-                    if(Fragment1.position<0){
-                        Fragment1.position=Fragment1.list.size()-1;
+                    selectedPosition-=1;
+                    if(selectedPosition<0){
+                        selectedPosition=list.size()-1;
                     }
                     try {
                         mediaPlayer = new MediaPlayer();
-                        mediaPlayer.setDataSource(MP3_PATH + Fragment1.list.get(Fragment1.position));
+                        mediaPlayer.setDataSource(MP3_PATH + list.get(selectedPosition));
                         mediaPlayer.prepare();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     mediaPlayer.start();
-                    Fragment1.selectedFile = String.valueOf(Fragment1.list.get(Fragment1.position));
-                    tvPlaying.setText("Now Playing ...   " + Fragment1.selectedFile);
+                    Fragment1.selectedFile = String.valueOf(list.get(selectedPosition));
+                    tvPlaying.setText("Now Playing ...   " + list.get(selectedPosition));
                     startUiThread();
                 }
                 break;
             case R.id.ivFoward :
                 if(mediaPlayer.isPlaying()){
                     mediaPlayer.stop();
-                    Fragment1.position+=1;
-                    if(Fragment1.position>=Fragment1.list.size()){
-                        Fragment1.position = 0;
+                    selectedPosition+=1;
+                    if(selectedPosition>=list.size()){
+                        selectedPosition = 0;
                     }
                     try {
                         mediaPlayer = new MediaPlayer();
-                        mediaPlayer.setDataSource(MP3_PATH + Fragment1.list.get(Fragment1.position));
+                        mediaPlayer.setDataSource(MP3_PATH + list.get(selectedPosition));
                         mediaPlayer.prepare();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    Fragment1.selectedFile = String.valueOf(Fragment1.list.get(Fragment1.position));
-                    tvPlaying.setText("Now Playing ...   " + Fragment1.selectedFile);
+                    Fragment1.selectedFile = String.valueOf(list.get(selectedPosition));
+                    tvPlaying.setText("Now Playing ...   " + list.get(selectedPosition));
                     mediaPlayer.start();
                     startUiThread();
                 }
@@ -266,13 +303,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void nextSong() {
-        if (++Fragment1.position >= Fragment1.list.size()) {
+        if (++selectedPosition >= list.size()) {
             // 마지막 곡이 끝나면, 재생할 곡을 초기화.
-            Fragment1.position = 0;
+            selectedPosition = 0;
         } else {
             // 다음 곡을 재생.
             try {
-                mediaPlayer.setDataSource(MP3_PATH + Fragment1.list.get(Fragment1.position));
+                mediaPlayer.setDataSource(MP3_PATH + list.get(selectedPosition));
                 mediaPlayer.prepare();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -292,7 +329,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void run() {
                         seekBar.setMax(mediaPlayer.getDuration());
-                        tvTime.setText(simpleDateFormat.format(mediaPlayer.getDuration()));
+//                        tvTime.setText(simpleDateFormat.format(mediaPlayer.getDuration()));
+                        Log.d("Mainactivity", "startUiThread : " + simpleDateFormat.format(mediaPlayer.getDuration()));
+
 
                     }
                 });
@@ -302,7 +341,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         @Override
                         public void run() {
                             seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                            tvTime.setText(simpleDateFormat.format(mediaPlayer.getCurrentPosition()));
+//                            tvTime.setText(simpleDateFormat.format(mediaPlayer.getCurrentPosition()));
+                            Log.d("Mainactivity", "startUiThread. while playing... : " + simpleDateFormat.format(mediaPlayer.getCurrentPosition()));
                         }
                     }); // end of runOnUiThread
                     SystemClock.sleep(100);
